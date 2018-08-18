@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<table align="center" border="1px;">
+    <tr>
+        <td>
+            <div id="camera" style="margin: 1px;"></div>
+            <label for="user_name">Name: </label><input id="user_name" type="text"/>
+            <button type="button" id="submit">Submit</button>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            {% if pic %}
+                <img style="width: 320px;height: 240px;display: block;" src="data:image/jpeg;base64,{{ pic }}">
+            {% else %}
+                <p>no data</p>
+            {% endif %}
+            <label>Name: {{ user_name }}</label>
+            <button type="button" id="delete">Delete</button>
+        </td>
+    </tr>
+
+</table>
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+<script src="https://cdn.rawgit.com/jhuckaby/webcamjs/master/webcam.min.js"></script>
+<script language="JavaScript">
+    $(document).ready(function () {
+        Webcam.set({
+            width: 320,
+            height: 240
+        });
+
+        Webcam.attach('#camera');
+
+        $('#submit').on('click', function(){
+            Webcam.snap(function(pic_uri){
+                var raw_data = pic_uri.replace(/^data\:image\/\w+\;base64\,/, '');
+                var blob = new Blob([Webcam.base64DecToArr(raw_data)], {type: 'image/jpeg'});
+                var form = new FormData();
+                form.append('user_name', $('#user_name').val());
+		        form.append('pic', blob, 'pic.jpg');
+                $.ajax({
+                    url: "{{ url_for('.index') }}",
+                    data: form,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    type: 'POST',
+                    success: function(res){
+                        window.location = "{{ url_for('.index') }}";
+                    },
+                    error: function(e){
+                        console.error('Error occurred...', e);
+                    }
+                });
+            });
+        });
+
+        $('#delete').on('click', function(){
+            $('<form action="{{ url_for('.delete') }}" method="POST"></form>')
+                .appendTo('body').submit();
+        });
+    });
+</script>
+</body>
+</html>
